@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Focus5 | Five things. One workday.</title>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+
+<body>
+
+  <!-- =====================================
+       HEADER
+       ===================================== -->
+
+  <header class="app-header">
+
+    <div class="brand">
+
+      <a
+        class="logo"
+        href="#"
+        aria-label="Focus5"
+      >
+        Focus<span>5</span>
+      </a>
+
+      <p class="tagline">
+        Five things. One workday.
+      </p>
+
+    </div>
+
+
+    <div class="current-time">
+
+      <span id="currentDate">
+        --
+      </span>
+
+      <span id="currentTime">
+        --:--
+      </span>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- =====================================
+       GŁÓWNA APLIKACJA
+       ===================================== -->
+
+  <main class="app-shell">
+
+
+    <!-- ===================================
+         ZADANIA
+         =================================== -->
+
+    <section
+      class="tasks-panel"
+      aria-labelledby="tasksHeading"
+    >
+
+      <div class="section-header">
+
+        <div>
+
+          <p class="eyebrow">
+            dzisiaj
+          </p>
+
+          <h1 id="tasksHeading">
+            Twoje najważniejsze zadania
+          </h1>
+
+        </div>
+
+
+        <div
+          class="task-counter"
+          aria-label="Liczba zadań"
+        >
+
+          <strong id="taskCount">
+            0
+          </strong>
+
+          <span>
+            / 5
+          </span>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =================================
+           FORMULARZ NOWEGO ZADANIA
+           ================================= -->
+
+      <form
+        class="task-form"
+        id="taskForm"
+      >
+
+        <div class="form-group">
+
+          <label for="taskTitle">
+            Zadanie
+          </label>
+
+          <input
+            id="taskTitle"
+            name="taskTitle"
+            type="text"
+            maxlength="80"
+            placeholder="Np. wyślij dokumenty do księgowości"
+            required
+          >
+
+        </div>
+
+
+        <div class="form-row">
+
+          <div class="form-group">
+
+            <label for="taskTime">
+              Godzina
+              <span class="optional">
+                opcjonalnie
+              </span>
+            </label>
+
+            <select
+  id="taskTime"
+  name="taskTime"
+>
+  <option value="">
+    Bez godziny
+  </option>
+</select>
+
+          </div>
+
+
+          <div class="form-group form-group-large">
+
+            <label for="taskNote">
+              Notatka
+              <span class="optional">
+                opcjonalnie
+              </span>
+            </label>
+
+            <input
+              id="taskNote"
+              name="taskNote"
+              type="text"
+              maxlength="160"
+              placeholder="Krótka dodatkowa informacja"
+            >
+
+          </div>
+
+        </div>
+
+
+        <button
+          class="primary-button"
+          id="addTaskButton"
+          type="submit"
+        >
+          + Dodaj zadanie
+        </button>
+
+       
+
+        <button
+  class="cancel-edit-button"
+  id="cancelEditButton"
+  type="button"
+  hidden
+>
+  Anuluj edycję
+</button>
+
+<p
+  class="task-limit-message"
+  id="taskLimitMessage"
+  hidden
+>
+  Limit osiągnięty. Zakończ lub usuń jedno z pięciu zadań.
+</p>
+
+
+
+      </form>
+
+
+
+      <!-- =================================
+           LISTA ZADAŃ
+           ================================= -->
+
+<div class="privacy-note">
+
+  <span class="privacy-dot"></span>
+
+  <p>
+    Dane są przechowywane lokalnie w tej przeglądarce
+    i nie są wysyłane na serwer.
+  </p>
+
+</div>
+
+
+      <div class="task-list-wrapper">
+
+        <div
+          class="empty-state"
+          id="emptyState"
+        >
+
+          <p>
+            Nie masz jeszcze żadnych zadań.
+          </p>
+
+          <span>
+            Dodaj maksymalnie pięć rzeczy,
+            które chcesz dziś zamknąć.
+          </span>
+
+        </div>
+
+
+        <ul
+          class="task-list"
+          id="taskList"
+          aria-live="polite"
+        >
+        </ul>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================
+         CZYSZCZENIE LISTY
+         =================================== -->
+
+    <section
+      class="cleanup-panel"
+      aria-labelledby="cleanupHeading"
+    >
+
+      <div>
+
+        <p class="eyebrow">
+          clean up
+        </p>
+
+        <h2 id="cleanupHeading">
+          Co zrobić z listą po pracy?
+        </h2>
+
+        <p class="cleanup-description">
+          Możesz usunąć zadania ręcznie
+          albo ustawić godzinę automatycznego
+          wyczyszczenia listy.
+        </p>
+
+      </div>
+
+
+<div class="cleanup-controls">
+
+  <div class="cleanup-datetime">
+
+    <div class="form-group">
+
+      <label for="cleanupDate">
+        Dzień
+      </label>
+
+      <input
+        id="cleanupDate"
+        type="date"
+      >
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label for="cleanupTime">
+        Godzina
+      </label>
+
+      <select id="cleanupTime">
+  <option value="">
+    Wybierz godzinę
+  </option>
+</select>
+
+    </div>
+
+  </div>
+
+
+  <button
+    class="secondary-button"
+    id="setCleanupButton"
+    type="button"
+  >
+    Ustaw automatyczne czyszczenie
+  </button>
+
+
+  <button
+    class="cancel-cleanup-button"
+    id="cancelCleanupButton"
+    type="button"
+    hidden
+  >
+    Wyłącz automatyczne czyszczenie
+  </button>
+
+
+  <p
+    class="cleanup-status"
+    id="cleanupStatus"
+  >
+    Automatyczne czyszczenie jest wyłączone.
+  </p>
+
+
+  <button
+    class="danger-button"
+    id="clearAllButton"
+    type="button"
+  >
+    Wyczyść wszystko
+  </button>
+
+</div>
+
+    </section>
+
+  </main>
+
+
+
+  <!-- =====================================
+       SZABLON POJEDYNCZEGO ZADANIA
+       ===================================== -->
+
+  <template id="taskTemplate">
+
+    <li class="task-item">
+
+      <button
+        class="task-check"
+        type="button"
+        aria-label="Oznacz zadanie jako wykonane"
+      >
+        <span></span>
+      </button>
+
+
+      <div class="task-content">
+
+        <div class="task-main">
+
+          <p class="task-title"></p>
+
+          <span class="task-time"></span>
+
+          <span class="task-time-status"></span>
+
+        </div>
+
+
+        <p class="task-note"></p>
+
+
+        <p class="task-completed-time"></p>
+
+      </div>
+
+
+      <div class="task-actions">
+
+        <button
+          class="task-edit"
+          type="button"
+        >
+          Edytuj
+        </button>
+
+        <button
+          class="task-delete"
+          type="button"
+        >
+          Usuń
+        </button>
+
+      </div>
+
+    </li>
+
+  </template>
+
+
+
+  <!-- =====================================
+       STOPKA
+       ===================================== -->
+
+  <footer class="app-footer">
+
+    <span>
+      Focus5
+    </span>
+
+    <span>
+      Local-first · No account required
+    </span>
+
+  </footer>
+
+  <!-- =====================================
+     POTWIERDZENIE CZYSZCZENIA
+     ===================================== -->
+
+<div
+  class="confirm-modal"
+  id="clearModal"
+  aria-hidden="true"
+>
+
+  <div
+    class="confirm-modal-box"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="clearModalTitle"
+  >
+
+    <p class="eyebrow">
+      potwierdzenie
+    </p>
+
+    <h2 id="clearModalTitle">
+      Wyczyścić całą listę?
+    </h2>
+
+    <p class="confirm-modal-text">
+      Wszystkie zadania zostaną usunięte.
+      Tej operacji nie można cofnąć.
+    </p>
+
+
+    <div class="confirm-modal-actions">
+
+      <button
+        class="modal-cancel-button"
+        id="cancelClearButton"
+        type="button"
+      >
+        Anuluj
+      </button>
+
+      <button
+        class="modal-confirm-button"
+        id="confirmClearButton"
+        type="button"
+      >
+        Wyczyść listę
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>
