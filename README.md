@@ -14,9 +14,8 @@ Celem Focus5 jest skupienie użytkownika na kilku konkretnych rzeczach, które r
 
 ## Live Demo
 
-Projekt zostanie opublikowany przez GitHub Pages.
 
-**Live demo:** link zostanie dodany po publikacji.
+https://cz-czarek.github.io/focus5/
 
 ---
 
