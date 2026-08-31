@@ -1,4 +1,6 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener(
+  "DOMContentLoaded",
+  async function () {
 
   // ==========================================
   // ELEMENTY HTML
@@ -43,15 +45,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const clearAllButton =
     document.getElementById("clearAllButton");
 
-    const clearModal =
-  document.getElementById("clearModal");
-
-const cancelClearButton =
-  document.getElementById("cancelClearButton");
-
-const confirmClearButton =
-  document.getElementById("confirmClearButton");
-
   const taskLimitMessage =
     document.getElementById("taskLimitMessage");
 
@@ -74,6 +67,66 @@ const confirmClearButton =
     document.getElementById("cleanupStatus");
 
 
+  // MODAL CZYSZCZENIA
+
+  const clearModal =
+    document.getElementById("clearModal");
+
+  const cancelClearButton =
+    document.getElementById("cancelClearButton");
+
+  const confirmClearButton =
+    document.getElementById("confirmClearButton");
+
+
+  // PIN
+
+  const pinStatus =
+    document.getElementById("pinStatus");
+
+  const setPinButton =
+    document.getElementById("setPinButton");
+
+  const lockNowButton =
+    document.getElementById("lockNowButton");
+
+  const disablePinButton =
+    document.getElementById("disablePinButton");
+
+  const pinModal =
+    document.getElementById("pinModal");
+
+  const pinInput =
+    document.getElementById("pinInput");
+
+  const pinConfirmInput =
+    document.getElementById("pinConfirmInput");
+
+  const pinModalMessage =
+    document.getElementById("pinModalMessage");
+
+  const cancelPinButton =
+    document.getElementById("cancelPinButton");
+
+  const savePinButton =
+    document.getElementById("savePinButton");
+
+  const lockScreen =
+    document.getElementById("lockScreen");
+
+  const unlockPinInput =
+    document.getElementById("unlockPinInput");
+
+  const unlockButton =
+    document.getElementById("unlockButton");
+
+  const unlockMessage =
+    document.getElementById("unlockMessage");
+
+  const resetFocusButton =
+    document.getElementById("resetFocusButton");
+
+
   // ==========================================
   // LOCAL STORAGE
   // ==========================================
@@ -84,6 +137,29 @@ const confirmClearButton =
   const CLEANUP_KEY =
     "focus5CleanupAt";
 
+  const PIN_ENABLED_KEY =
+    "focus5PinEnabled";
+
+  const PIN_SALT_KEY =
+    "focus5PinSalt";
+
+  const PIN_VERIFIER_KEY =
+    "focus5PinVerifier";
+
+  const ENCRYPTED_TASKS_KEY =
+    "focus5EncryptedTasks";
+
+
+  // ==========================================
+  // CRYPTO
+  // ==========================================
+
+  const PIN_VERIFIER_TEXT =
+    "focus5-pin-verifier-v1";
+
+  const PBKDF2_ITERATIONS =
+    200000;
+
 
   // ==========================================
   // STAN APLIKACJI
@@ -91,19 +167,287 @@ const confirmClearButton =
 
   let tasks = [];
 
-  let editingTaskId = null;
+  let editingTaskId =
+    null;
 
-  let cleanupAt = null;
+  let cleanupAt =
+    null;
+
+  let pinEnabled =
+    localStorage.getItem(
+      PIN_ENABLED_KEY
+    ) === "true";
+
+  let sessionKey =
+    null;
+
+  let isLocked =
+    pinEnabled;
+
+
+  // ==========================================
+  // BASE64
+  // ==========================================
+
+  function bytesToBase64(bytes) {
+
+    let binary =
+      "";
+
+
+    bytes.forEach(function (byte) {
+
+      binary +=
+        String.fromCharCode(byte);
+
+    });
+
+
+    return btoa(binary);
+
+  }
+
+
+  function base64ToBytes(base64) {
+
+    const binary =
+      atob(base64);
+
+
+    const bytes =
+      new Uint8Array(
+        binary.length
+      );
+
+
+    for (
+      let i = 0;
+      i < binary.length;
+      i++
+    ) {
+
+      bytes[i] =
+        binary.charCodeAt(i);
+
+    }
+
+
+    return bytes;
+
+  }
+
+
+  // ==========================================
+  // GENEROWANIE KLUCZA Z PIN-U
+  // ==========================================
+
+  async function derivePinKey(
+    pin,
+    salt
+  ) {
+
+    const encoder =
+      new TextEncoder();
+
+
+    const keyMaterial =
+      await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(pin),
+        "PBKDF2",
+        false,
+        [
+          "deriveKey"
+        ]
+      );
+
+
+    return crypto.subtle.deriveKey(
+      {
+        name:
+          "PBKDF2",
+
+        salt:
+          salt,
+
+        iterations:
+          PBKDF2_ITERATIONS,
+
+        hash:
+          "SHA-256"
+      },
+
+      keyMaterial,
+
+      {
+        name:
+          "AES-GCM",
+
+        length:
+          256
+      },
+
+      false,
+
+      [
+        "encrypt",
+        "decrypt"
+      ]
+    );
+
+  }
+
+
+  // ==========================================
+  // SZYFROWANIE
+  // ==========================================
+
+  async function encryptString(
+    text,
+    key
+  ) {
+
+    const encoder =
+      new TextEncoder();
+
+
+    const iv =
+      crypto.getRandomValues(
+        new Uint8Array(12)
+      );
+
+
+    const encrypted =
+      await crypto.subtle.encrypt(
+        {
+          name:
+            "AES-GCM",
+
+          iv:
+            iv
+        },
+
+        key,
+
+        encoder.encode(text)
+      );
+
+
+    return JSON.stringify({
+
+      iv:
+        bytesToBase64(iv),
+
+      data:
+        bytesToBase64(
+          new Uint8Array(
+            encrypted
+          )
+        )
+
+    });
+
+  }
+
+
+  // ==========================================
+  // ODSZYFROWANIE
+  // ==========================================
+
+  async function decryptString(
+    bundleString,
+    key
+  ) {
+
+    const bundle =
+      JSON.parse(bundleString);
+
+
+    const iv =
+      base64ToBytes(
+        bundle.iv
+      );
+
+    const encrypted =
+      base64ToBytes(
+        bundle.data
+      );
+
+
+    const decrypted =
+      await crypto.subtle.decrypt(
+        {
+          name:
+            "AES-GCM",
+
+          iv:
+            iv
+        },
+
+        key,
+
+        encrypted
+      );
+
+
+    return new TextDecoder()
+      .decode(decrypted);
+
+  }
+
+
+  // ==========================================
+  // WALIDACJA PIN-U
+  // ==========================================
+
+  function isValidPin(pin) {
+
+    return /^\d{4}$/.test(pin);
+
+  }
+
+
+  function restrictPinInput(input) {
+
+    input.addEventListener(
+      "input",
+      function () {
+
+        input.value =
+          input.value
+            .replace(/\D/g, "")
+            .slice(0, 4);
+
+      }
+    );
+
+  }
+
+
+  restrictPinInput(pinInput);
+
+  restrictPinInput(
+    pinConfirmInput
+  );
+
+  restrictPinInput(
+    unlockPinInput
+  );
 
 
   // ==========================================
   // TWORZENIE OPCJI GODZINY
   // ==========================================
 
-  function createTimeOption(time, label = time) {
+  function createTimeOption(
+    time,
+    label = time
+  ) {
 
     const option =
-      document.createElement("option");
+      document.createElement(
+        "option"
+      );
 
     option.value =
       time;
@@ -117,18 +461,13 @@ const confirmClearButton =
 
 
   // ==========================================
-  // GODZINY DLA NOWEGO ZADANIA
+  // GODZINY ZADANIA
   // ==========================================
 
   function populateTaskTimeOptions(
     preservedTime = "",
     allowPastPreserved = false
   ) {
-
-    if (!taskTime) {
-      return;
-    }
-
 
     taskTime.innerHTML =
       "";
@@ -164,11 +503,9 @@ const confirmClearButton =
       ) {
 
         const optionMinutes =
-          hour * 60 + minute;
+          hour * 60 +
+          minute;
 
-
-        // Nie pokazujemy godzin,
-        // które już minęły.
 
         if (
           optionMinutes <
@@ -181,16 +518,12 @@ const confirmClearButton =
 
 
         const hourText =
-          String(hour).padStart(
-            2,
-            "0"
-          );
+          String(hour)
+            .padStart(2, "0");
 
         const minuteText =
-          String(minute).padStart(
-            2,
-            "0"
-          );
+          String(minute)
+            .padStart(2, "0");
 
 
         const time =
@@ -208,12 +541,9 @@ const confirmClearButton =
     }
 
 
-    // Podczas edycji stare zadanie
-    // może mieć godzinę z przeszłości.
-
     if (preservedTime) {
 
-      const exists =
+      let exists =
         Array.from(
           taskTime.options
         ).some(function (option) {
@@ -239,23 +569,13 @@ const confirmClearButton =
           )
         );
 
+        exists =
+          true;
+
       }
 
 
-      const canSelect =
-        Array.from(
-          taskTime.options
-        ).some(function (option) {
-
-          return (
-            option.value ===
-            preservedTime
-          );
-
-        });
-
-
-      if (canSelect) {
+      if (exists) {
 
         taskTime.value =
           preservedTime;
@@ -275,11 +595,6 @@ const confirmClearButton =
     preservedTime = "",
     allowCustomPreserved = false
   ) {
-
-    if (!cleanupTime) {
-      return;
-    }
-
 
     cleanupTime.innerHTML =
       "";
@@ -321,11 +636,9 @@ const confirmClearButton =
       ) {
 
         const optionMinutes =
-          hour * 60 + minute;
+          hour * 60 +
+          minute;
 
-
-        // Jeśli wybrany jest DZISIAJ,
-        // ukrywamy minione godziny.
 
         if (
           selectedDate === today &&
@@ -339,16 +652,12 @@ const confirmClearButton =
 
 
         const hourText =
-          String(hour).padStart(
-            2,
-            "0"
-          );
+          String(hour)
+            .padStart(2, "0");
 
         const minuteText =
-          String(minute).padStart(
-            2,
-            "0"
-          );
+          String(minute)
+            .padStart(2, "0");
 
 
         const time =
@@ -380,9 +689,6 @@ const confirmClearButton =
 
         });
 
-
-      // Obsługa harmonogramów utworzonych
-      // wcześniej np. o 18:43.
 
       if (
         !exists &&
@@ -417,7 +723,16 @@ const confirmClearButton =
   // WCZYTYWANIE ZADAŃ
   // ==========================================
 
-  function loadTasks() {
+  async function loadTasks() {
+
+    if (pinEnabled) {
+
+      tasks = [];
+
+      return;
+
+    }
+
 
     const savedTasks =
       localStorage.getItem(
@@ -445,7 +760,10 @@ const confirmClearButton =
       ) {
 
         tasks =
-          parsedTasks.slice(0, 5);
+          parsedTasks.slice(
+            0,
+            5
+          );
 
       } else {
 
@@ -460,6 +778,57 @@ const confirmClearButton =
         error
       );
 
+
+      tasks = [];
+
+    }
+
+  }
+
+
+  // ==========================================
+  // WCZYTYWANIE ZASZYFROWANYCH ZADAŃ
+  // ==========================================
+
+  async function loadEncryptedTasks(
+    key
+  ) {
+
+    const encryptedTasks =
+      localStorage.getItem(
+        ENCRYPTED_TASKS_KEY
+      );
+
+
+    if (!encryptedTasks) {
+
+      tasks = [];
+
+      return;
+
+    }
+
+
+    const decrypted =
+      await decryptString(
+        encryptedTasks,
+        key
+      );
+
+
+    const parsed =
+      JSON.parse(decrypted);
+
+
+    if (
+      Array.isArray(parsed)
+    ) {
+
+      tasks =
+        parsed.slice(0, 5);
+
+    } else {
+
       tasks = [];
 
     }
@@ -471,7 +840,39 @@ const confirmClearButton =
   // ZAPISYWANIE ZADAŃ
   // ==========================================
 
-  function saveTasks() {
+  async function saveTasks() {
+
+    if (pinEnabled) {
+
+      if (!sessionKey) {
+
+        return;
+
+      }
+
+
+      const encrypted =
+        await encryptString(
+          JSON.stringify(tasks),
+          sessionKey
+        );
+
+
+      localStorage.setItem(
+        ENCRYPTED_TASKS_KEY,
+        encrypted
+      );
+
+
+      localStorage.removeItem(
+        STORAGE_KEY
+      );
+
+
+      return;
+
+    }
+
 
     localStorage.setItem(
       STORAGE_KEY,
@@ -495,9 +896,14 @@ const confirmClearButton =
       new Intl.DateTimeFormat(
         "pl-PL",
         {
-          weekday: "short",
-          day: "2-digit",
-          month: "short"
+          weekday:
+            "short",
+
+          day:
+            "2-digit",
+
+          month:
+            "short"
         }
       );
 
@@ -506,9 +912,14 @@ const confirmClearButton =
       new Intl.DateTimeFormat(
         "pl-PL",
         {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit",
+
+          second:
+            "2-digit"
         }
       );
 
@@ -522,23 +933,20 @@ const confirmClearButton =
   }
 
 
-  // ==========================================
-  // AKTUALNA GODZINA HH:MM
-  // ==========================================
-
   function getCurrentShortTime() {
-
-    const now =
-      new Date();
-
 
     return new Intl.DateTimeFormat(
       "pl-PL",
       {
-        hour: "2-digit",
-        minute: "2-digit"
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit"
       }
-    ).format(now);
+    ).format(
+      new Date()
+    );
 
   }
 
@@ -567,48 +975,37 @@ const confirmClearButton =
       task.time.split(":");
 
 
-    const taskHour =
-      Number(timeParts[0]);
-
-    const taskMinute =
-      Number(timeParts[1]);
-
-
     const taskDate =
       new Date();
 
 
     taskDate.setHours(
-      taskHour,
-      taskMinute,
+      Number(timeParts[0]),
+      Number(timeParts[1]),
       0,
       0
     );
 
 
-    const difference =
-      taskDate.getTime() -
-      now.getTime();
-
-
     const differenceMinutes =
       Math.round(
-        difference / 60000
+        (
+          taskDate.getTime() -
+          now.getTime()
+        ) /
+        60000
       );
 
 
-    // Więcej niż godzina do zadania
-
     if (
-      differenceMinutes > 60
+      differenceMinutes >
+      60
     ) {
 
       return null;
 
     }
 
-
-    // Zadanie się zbliża
 
     if (
       differenceMinutes > 0
@@ -629,10 +1026,7 @@ const confirmClearButton =
     }
 
 
-    // Aktualny moment
-
     if (
-      differenceMinutes <= 0 &&
       differenceMinutes >= -1
     ) {
 
@@ -648,8 +1042,6 @@ const confirmClearButton =
 
     }
 
-
-    // Zadanie zaległe
 
     return {
 
@@ -668,7 +1060,7 @@ const confirmClearButton =
 
 
   // ==========================================
-  // DATA DLA INPUT TYPE="DATE"
+  // DATA INPUT
   // ==========================================
 
   function getDateInputValue(date) {
@@ -679,12 +1071,18 @@ const confirmClearButton =
     const month =
       String(
         date.getMonth() + 1
-      ).padStart(2, "0");
+      ).padStart(
+        2,
+        "0"
+      );
 
     const day =
       String(
         date.getDate()
-      ).padStart(2, "0");
+      ).padStart(
+        2,
+        "0"
+      );
 
 
     return (
@@ -697,10 +1095,6 @@ const confirmClearButton =
 
   }
 
-
-  // ==========================================
-  // DOMYŚLNA DATA CLEANUP
-  // ==========================================
 
   function setDefaultCleanupDate() {
 
@@ -760,23 +1154,16 @@ const confirmClearButton =
       !limitReached;
 
 
-    if (limitReached) {
-
-      addTaskButton.textContent =
-        "Limit 5 osiągnięty";
-
-    } else {
-
-      addTaskButton.textContent =
-        "+ Dodaj zadanie";
-
-    }
+    addTaskButton.textContent =
+      limitReached
+        ? "Limit 5 osiągnięty"
+        : "+ Dodaj zadanie";
 
   }
 
 
   // ==========================================
-  // RENDEROWANIE ZADAŃ
+  // RENDEROWANIE
   // ==========================================
 
   function renderTasks() {
@@ -788,8 +1175,9 @@ const confirmClearButton =
     taskCount.textContent =
       tasks.length;
 
-      clearAllButton.disabled =
-  tasks.length === 0;
+
+    clearAllButton.disabled =
+      tasks.length === 0;
 
 
     updateTaskLimitState();
@@ -859,13 +1247,9 @@ const confirmClearButton =
         task.id;
 
 
-      // TYTUŁ
-
       titleElement.textContent =
         task.title;
 
-
-      // GODZINA
 
       if (task.time) {
 
@@ -879,8 +1263,6 @@ const confirmClearButton =
 
       }
 
-
-      // STATUS CZASU
 
       const timeStatus =
         getTaskTimeStatus(task);
@@ -913,8 +1295,6 @@ const confirmClearButton =
       }
 
 
-      // NOTATKA
-
       if (task.note) {
 
         noteElement.textContent =
@@ -927,8 +1307,6 @@ const confirmClearButton =
 
       }
 
-
-      // STATUS WYKONANIA
 
       if (task.completed) {
 
@@ -980,9 +1358,14 @@ const confirmClearButton =
 
   taskForm.addEventListener(
     "submit",
-    function (event) {
+    async function (event) {
 
       event.preventDefault();
+
+
+      if (isLocked) {
+        return;
+      }
 
 
       const title =
@@ -999,8 +1382,6 @@ const confirmClearButton =
         return;
       }
 
-
-      // EDYCJA
 
       if (
         editingTaskId !== null
@@ -1036,7 +1417,7 @@ const confirmClearButton =
           note;
 
 
-        saveTasks();
+        await saveTasks();
 
         resetForm();
 
@@ -1046,8 +1427,6 @@ const confirmClearButton =
 
       }
 
-
-      // LIMIT 5 — dodatkowe zabezpieczenie
 
       if (
         tasks.length >= 5
@@ -1060,9 +1439,7 @@ const confirmClearButton =
       }
 
 
-      // NOWE ZADANIE
-
-      const newTask = {
+      tasks.push({
 
         id:
           Date.now(),
@@ -1082,15 +1459,10 @@ const confirmClearButton =
         completedAt:
           null
 
-      };
+      });
 
 
-      tasks.push(
-        newTask
-      );
-
-
-      saveTasks();
+      await saveTasks();
 
       renderTasks();
 
@@ -1101,12 +1473,17 @@ const confirmClearButton =
 
 
   // ==========================================
-  // OBSŁUGA PRZYCISKÓW ZADAŃ
+  // PRZYCISKI ZADAŃ
   // ==========================================
 
   taskList.addEventListener(
     "click",
-    function (event) {
+    async function (event) {
+
+      if (isLocked) {
+        return;
+      }
+
 
       const clickedButton =
         event.target.closest(
@@ -1136,22 +1513,20 @@ const confirmClearButton =
         );
 
 
-      // WYKONAJ / COFNIJ
-
       if (
         clickedButton.classList.contains(
           "task-check"
         )
       ) {
 
-        toggleTask(taskId);
+        await toggleTask(
+          taskId
+        );
 
         return;
 
       }
 
-
-      // EDYTUJ
 
       if (
         clickedButton.classList.contains(
@@ -1159,14 +1534,14 @@ const confirmClearButton =
         )
       ) {
 
-        startEditingTask(taskId);
+        startEditingTask(
+          taskId
+        );
 
         return;
 
       }
 
-
-      // USUŃ
 
       if (
         clickedButton.classList.contains(
@@ -1174,7 +1549,9 @@ const confirmClearButton =
         )
       ) {
 
-        deleteTask(taskId);
+        await deleteTask(
+          taskId
+        );
 
       }
 
@@ -1182,11 +1559,9 @@ const confirmClearButton =
   );
 
 
-  // ==========================================
-  // WYKONANIE ZADANIA
-  // ==========================================
-
-  function toggleTask(taskId) {
+  async function toggleTask(
+    taskId
+  ) {
 
     const task =
       tasks.find(function (task) {
@@ -1207,31 +1582,22 @@ const confirmClearButton =
       !task.completed;
 
 
-    if (task.completed) {
-
-      task.completedAt =
-        getCurrentShortTime();
-
-    } else {
-
-      task.completedAt =
-        null;
-
-    }
+    task.completedAt =
+      task.completed
+        ? getCurrentShortTime()
+        : null;
 
 
-    saveTasks();
+    await saveTasks();
 
     renderTasks();
 
   }
 
 
-  // ==========================================
-  // USUWANIE JEDNEGO ZADANIA
-  // ==========================================
-
-  function deleteTask(taskId) {
+  async function deleteTask(
+    taskId
+  ) {
 
     tasks =
       tasks.filter(function (task) {
@@ -1252,7 +1618,7 @@ const confirmClearButton =
     }
 
 
-    saveTasks();
+    await saveTasks();
 
     renderTasks();
 
@@ -1260,151 +1626,12 @@ const confirmClearButton =
 
 
   // ==========================================
-  // CZYSZCZENIE CAŁEJ LISTY
+  // EDYCJA
   // ==========================================
 
- // ==========================================
-// MODAL CZYSZCZENIA LISTY
-// ==========================================
-
-function openClearModal() {
-
-  if (tasks.length === 0) {
-    return;
-  }
-
-
-  clearModal.classList.add(
-    "open"
-  );
-
-  clearModal.setAttribute(
-    "aria-hidden",
-    "false"
-  );
-
-
-  confirmClearButton.focus();
-
-}
-
-
-function closeClearModal() {
-
-  clearModal.classList.remove(
-    "open"
-  );
-
-  clearModal.setAttribute(
-    "aria-hidden",
-    "true"
-  );
-
-}
-
-
-// Otwórz
-
-clearAllButton.addEventListener(
-  "click",
-  function () {
-
-    openClearModal();
-
-  }
-);
-
-
-// Anuluj
-
-cancelClearButton.addEventListener(
-  "click",
-  function () {
-
-    closeClearModal();
-
-  }
-);
-
-
-// Potwierdź
-
-confirmClearButton.addEventListener(
-  "click",
-  function () {
-
-    clearAllTasks();
-
-    closeClearModal();
-
-  }
-);
-
-
-// Kliknięcie tła
-
-clearModal.addEventListener(
-  "click",
-  function (event) {
-
-    if (
-      event.target === clearModal
-    ) {
-
-      closeClearModal();
-
-    }
-
-  }
-);
-
-
-// ESC
-
-document.addEventListener(
-  "keydown",
-  function (event) {
-
-    if (
-      event.key === "Escape" &&
-      clearModal.classList.contains("open")
-    ) {
-
-      closeClearModal();
-
-    }
-
-  }
-);
-
-
-  function clearAllTasks() {
-
-    tasks =
-      [];
-
-
-    editingTaskId =
-      null;
-
-
-    localStorage.removeItem(
-      STORAGE_KEY
-    );
-
-
-    resetForm();
-
-    renderTasks();
-
-  }
-
-
-  // ==========================================
-  // EDYCJA ZADANIA
-  // ==========================================
-
-  function startEditingTask(taskId) {
+  function startEditingTask(
+    taskId
+  ) {
 
     const task =
       tasks.find(function (task) {
@@ -1428,9 +1655,6 @@ document.addEventListener(
     taskTitle.value =
       task.title;
 
-
-    // Jeżeli zadanie jest już zaległe,
-    // zachowujemy jego wcześniejszą godzinę.
 
     populateTaskTimeOptions(
       task.time || "",
@@ -1474,10 +1698,6 @@ document.addEventListener(
   }
 
 
-  // ==========================================
-  // ANULOWANIE EDYCJI
-  // ==========================================
-
   cancelEditButton.addEventListener(
     "click",
     function () {
@@ -1488,10 +1708,6 @@ document.addEventListener(
   );
 
 
-  // ==========================================
-  // RESET FORMULARZA
-  // ==========================================
-
   function resetForm() {
 
     editingTaskId =
@@ -1500,9 +1716,6 @@ document.addEventListener(
 
     taskForm.reset();
 
-
-    // Po resecie aktualizujemy dostępne
-    // godziny według bieżącego czasu.
 
     populateTaskTimeOptions();
 
@@ -1514,13 +1727,158 @@ document.addEventListener(
     updateTaskLimitState();
 
 
-    taskTitle.focus();
+    if (!isLocked) {
+
+      taskTitle.focus();
+
+    }
 
   }
 
 
   // ==========================================
-  // AUTO CLEANUP — WCZYTYWANIE
+  // CLEAR MODAL
+  // ==========================================
+
+  function openClearModal() {
+
+    if (
+      tasks.length === 0 ||
+      isLocked
+    ) {
+
+      return;
+
+    }
+
+
+    clearModal.classList.add(
+      "open"
+    );
+
+    clearModal.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+
+    confirmClearButton.focus();
+
+  }
+
+
+  function closeClearModal() {
+
+    clearModal.classList.remove(
+      "open"
+    );
+
+    clearModal.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+
+  clearAllButton.addEventListener(
+    "click",
+    function () {
+
+      openClearModal();
+
+    }
+  );
+
+
+  cancelClearButton.addEventListener(
+    "click",
+    function () {
+
+      closeClearModal();
+
+    }
+  );
+
+
+  confirmClearButton.addEventListener(
+    "click",
+    async function () {
+
+      await clearAllTasks();
+
+      closeClearModal();
+
+    }
+  );
+
+
+  clearModal.addEventListener(
+    "click",
+    function (event) {
+
+      if (
+        event.target ===
+        clearModal
+      ) {
+
+        closeClearModal();
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // CZYSZCZENIE ZADAŃ
+  // ==========================================
+
+  async function clearAllTasks() {
+
+    tasks =
+      [];
+
+    editingTaskId =
+      null;
+
+
+    if (pinEnabled) {
+
+      if (sessionKey) {
+
+        await saveTasks();
+
+      } else {
+
+        // Auto-wipe może nastąpić,
+        // gdy aplikacja jest zablokowana.
+        // Usuwamy wtedy zaszyfrowaną listę.
+
+        localStorage.removeItem(
+          ENCRYPTED_TASKS_KEY
+        );
+
+      }
+
+    } else {
+
+      localStorage.removeItem(
+        STORAGE_KEY
+      );
+
+    }
+
+
+    resetForm();
+
+    renderTasks();
+
+  }
+
+
+  // ==========================================
+  // CLEANUP
   // ==========================================
 
   function loadCleanupSchedule() {
@@ -1555,7 +1913,6 @@ document.addEventListener(
         CLEANUP_KEY
       );
 
-
       cleanupAt =
         null;
 
@@ -1570,10 +1927,6 @@ document.addEventListener(
   }
 
 
-  // ==========================================
-  // PRZYWRACANIE PÓL AUTO CLEANUP
-  // ==========================================
-
   function restoreCleanupFields() {
 
     if (!cleanupAt) {
@@ -1582,7 +1935,9 @@ document.addEventListener(
 
 
     const targetDate =
-      new Date(cleanupAt);
+      new Date(
+        cleanupAt
+      );
 
 
     cleanupDate.value =
@@ -1594,56 +1949,52 @@ document.addEventListener(
     const hours =
       String(
         targetDate.getHours()
-      ).padStart(2, "0");
+      ).padStart(
+        2,
+        "0"
+      );
 
 
     const minutes =
       String(
         targetDate.getMinutes()
-      ).padStart(2, "0");
-
-
-    const time =
-      hours +
-      ":" +
-      minutes;
+      ).padStart(
+        2,
+        "0"
+      );
 
 
     populateCleanupTimeOptions(
-      time,
+      hours +
+      ":" +
+      minutes,
+
       true
     );
 
   }
 
 
-  // ==========================================
-  // ZMIANA DATY AUTO CLEANUP
-  // ==========================================
-
   cleanupDate.addEventListener(
     "change",
     function () {
 
-      const previousTime =
-        cleanupTime.value;
-
-
       populateCleanupTimeOptions(
-        previousTime
+        cleanupTime.value
       );
 
     }
   );
 
 
-  // ==========================================
-  // AUTO CLEANUP — USTAWIENIE
-  // ==========================================
-
   setCleanupButton.addEventListener(
     "click",
     function () {
+
+      if (isLocked) {
+        return;
+      }
+
 
       const selectedDate =
         cleanupDate.value;
@@ -1689,10 +2040,6 @@ document.addEventListener(
         )
       ) {
 
-        alert(
-          "Nie udało się odczytać wybranej daty."
-        );
-
         return;
 
       }
@@ -1728,10 +2075,6 @@ document.addEventListener(
   );
 
 
-  // ==========================================
-  // WYŁĄCZANIE AUTO CLEANUP
-  // ==========================================
-
   cancelCleanupButton.addEventListener(
     "click",
     function () {
@@ -1763,10 +2106,6 @@ document.addEventListener(
   }
 
 
-  // ==========================================
-  // FORMATOWANIE ODLICZANIA
-  // ==========================================
-
   function formatCountdown(
     milliseconds
   ) {
@@ -1775,43 +2114,49 @@ document.addEventListener(
       Math.max(
         0,
         Math.floor(
-          milliseconds / 1000
+          milliseconds /
+          1000
         )
       );
 
 
     const hours =
       Math.floor(
-        totalSeconds / 3600
+        totalSeconds /
+        3600
       );
 
 
     const minutes =
       Math.floor(
-        (totalSeconds % 3600) / 60
+        (
+          totalSeconds %
+          3600
+        ) /
+        60
       );
 
 
     const seconds =
-      totalSeconds % 60;
+      totalSeconds %
+      60;
 
 
     return (
-      String(hours).padStart(2, "0") +
+      String(hours)
+        .padStart(2, "0") +
       ":" +
-      String(minutes).padStart(2, "0") +
+      String(minutes)
+        .padStart(2, "0") +
       ":" +
-      String(seconds).padStart(2, "0")
+      String(seconds)
+        .padStart(2, "0")
     );
 
   }
 
 
-  // ==========================================
-  // STATUS AUTO CLEANUP
-  // ==========================================
-
-  function updateCleanupStatus() {
+  async function updateCleanupStatus() {
 
     if (!cleanupAt) {
 
@@ -1831,13 +2176,11 @@ document.addEventListener(
       Date.now();
 
 
-    // Termin minął
-
     if (
       now >= cleanupAt
     ) {
 
-      clearAllTasks();
+      await clearAllTasks();
 
       removeCleanupSchedule();
 
@@ -1851,33 +2194,42 @@ document.addEventListener(
 
 
     const targetDate =
-      new Date(cleanupAt);
+      new Date(
+        cleanupAt
+      );
 
 
     const formattedDate =
       new Intl.DateTimeFormat(
         "pl-PL",
         {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric"
+          day:
+            "2-digit",
+
+          month:
+            "2-digit",
+
+          year:
+            "numeric"
         }
-      ).format(targetDate);
+      ).format(
+        targetDate
+      );
 
 
     const formattedTime =
       new Intl.DateTimeFormat(
         "pl-PL",
         {
-          hour: "2-digit",
-          minute: "2-digit"
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit"
         }
-      ).format(targetDate);
-
-
-    const remaining =
-      cleanupAt -
-      now;
+      ).format(
+        targetDate
+      );
 
 
     cleanupStatus.textContent =
@@ -1887,7 +2239,8 @@ document.addEventListener(
       formattedTime +
       " · pozostało " +
       formatCountdown(
-        remaining
+        cleanupAt -
+        now
       );
 
 
@@ -1898,32 +2251,788 @@ document.addEventListener(
 
 
   // ==========================================
-  // START APLIKACJI
+  // PIN — UI
   // ==========================================
 
-  loadTasks();
+  function updatePinUI() {
+
+    if (pinEnabled) {
+
+      pinStatus.textContent =
+        "PIN jest aktywny. Zadania są zapisane w formie zaszyfrowanej.";
+
+
+      setPinButton.hidden =
+        true;
+
+      lockNowButton.hidden =
+        false;
+
+      disablePinButton.hidden =
+        false;
+
+    } else {
+
+      pinStatus.textContent =
+        "PIN jest wyłączony.";
+
+
+      setPinButton.hidden =
+        false;
+
+      lockNowButton.hidden =
+        true;
+
+      disablePinButton.hidden =
+        true;
+
+    }
+
+  }
+
+
+  // ==========================================
+  // PIN — MODAL
+  // ==========================================
+
+  function openPinModal() {
+
+    pinInput.value =
+      "";
+
+    pinConfirmInput.value =
+      "";
+
+    pinModalMessage.textContent =
+      "";
+
+
+    pinModal.classList.add(
+      "open"
+    );
+
+    pinModal.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+
+    pinInput.focus();
+
+  }
+
+
+  function closePinModal() {
+
+    pinModal.classList.remove(
+      "open"
+    );
+
+    pinModal.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+
+  setPinButton.addEventListener(
+    "click",
+    function () {
+
+      openPinModal();
+
+    }
+  );
+
+
+  cancelPinButton.addEventListener(
+    "click",
+    function () {
+
+      closePinModal();
+
+    }
+  );
+
+
+  pinModal.addEventListener(
+    "click",
+    function (event) {
+
+      if (
+        event.target ===
+        pinModal
+      ) {
+
+        closePinModal();
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // WŁĄCZANIE PIN-U
+  // ==========================================
+
+  savePinButton.addEventListener(
+    "click",
+    async function () {
+
+      const pin =
+        pinInput.value;
+
+      const confirmation =
+        pinConfirmInput.value;
+
+
+      pinModalMessage.textContent =
+        "";
+
+
+      if (!isValidPin(pin)) {
+
+        pinModalMessage.textContent =
+          "PIN musi składać się dokładnie z 4 cyfr.";
+
+        return;
+
+      }
+
+
+      if (
+        pin !== confirmation
+      ) {
+
+        pinModalMessage.textContent =
+          "Wprowadzone PIN-y nie są identyczne.";
+
+        return;
+
+      }
+
+
+      if (
+        !window.crypto ||
+        !crypto.subtle
+      ) {
+
+        pinModalMessage.textContent =
+          "Ta przeglądarka nie obsługuje wymaganej funkcji szyfrowania.";
+
+        return;
+
+      }
+
+
+      try {
+
+        savePinButton.disabled =
+          true;
+
+        savePinButton.textContent =
+          "Włączanie...";
+
+
+        const salt =
+          crypto.getRandomValues(
+            new Uint8Array(16)
+          );
+
+
+        const key =
+          await derivePinKey(
+            pin,
+            salt
+          );
+
+
+        const verifier =
+          await encryptString(
+            PIN_VERIFIER_TEXT,
+            key
+          );
+
+
+        const encryptedTasks =
+          await encryptString(
+            JSON.stringify(tasks),
+            key
+          );
+
+
+        localStorage.setItem(
+          PIN_SALT_KEY,
+          bytesToBase64(
+            salt
+          )
+        );
+
+
+        localStorage.setItem(
+          PIN_VERIFIER_KEY,
+          verifier
+        );
+
+
+        localStorage.setItem(
+          ENCRYPTED_TASKS_KEY,
+          encryptedTasks
+        );
+
+
+        localStorage.setItem(
+          PIN_ENABLED_KEY,
+          "true"
+        );
+
+
+        localStorage.removeItem(
+          STORAGE_KEY
+        );
+
+
+        pinEnabled =
+          true;
+
+        isLocked =
+          false;
+
+        sessionKey =
+          key;
+
+
+        closePinModal();
+
+        updatePinUI();
+
+
+      } catch (error) {
+
+        console.error(
+          "Nie udało się włączyć PIN-u:",
+          error
+        );
+
+
+        pinModalMessage.textContent =
+          "Nie udało się włączyć ochrony PIN.";
+
+      } finally {
+
+        savePinButton.disabled =
+          false;
+
+        savePinButton.textContent =
+          "Włącz PIN";
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // WERYFIKACJA PIN-U
+  // ==========================================
+
+  async function verifyPin(pin) {
+
+    if (!isValidPin(pin)) {
+
+      return null;
+
+    }
+
+
+    const saltString =
+      localStorage.getItem(
+        PIN_SALT_KEY
+      );
+
+    const verifier =
+      localStorage.getItem(
+        PIN_VERIFIER_KEY
+      );
+
+
+    if (
+      !saltString ||
+      !verifier
+    ) {
+
+      return null;
+
+    }
+
+
+    try {
+
+      const salt =
+        base64ToBytes(
+          saltString
+        );
+
+
+      const key =
+        await derivePinKey(
+          pin,
+          salt
+        );
+
+
+      const decrypted =
+        await decryptString(
+          verifier,
+          key
+        );
+
+
+      if (
+        decrypted !==
+        PIN_VERIFIER_TEXT
+      ) {
+
+        return null;
+
+      }
+
+
+      return key;
+
+
+    } catch (error) {
+
+      return null;
+
+    }
+
+  }
+
+
+  // ==========================================
+  // BLOKADA
+  // ==========================================
+
+  function showLockScreen() {
+
+    isLocked =
+      true;
+
+
+    sessionKey =
+      null;
+
+
+    tasks =
+      [];
+
+
+    editingTaskId =
+      null;
+
+
+    renderTasks();
+
+
+    unlockPinInput.value =
+      "";
+
+    unlockMessage.textContent =
+      "";
+
+
+    lockScreen.classList.add(
+      "open"
+    );
+
+    lockScreen.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+
+    setTimeout(
+      function () {
+
+        unlockPinInput.focus();
+
+      },
+      50
+    );
+
+  }
+
+
+  function hideLockScreen() {
+
+    isLocked =
+      false;
+
+
+    lockScreen.classList.remove(
+      "open"
+    );
+
+    lockScreen.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+
+  lockNowButton.addEventListener(
+    "click",
+    function () {
+
+      if (!pinEnabled) {
+        return;
+      }
+
+
+      showLockScreen();
+
+    }
+  );
+
+
+  // ==========================================
+  // ODBLOKOWANIE
+  // ==========================================
+
+  async function unlockFocus() {
+
+    const pin =
+      unlockPinInput.value;
+
+
+    unlockMessage.textContent =
+      "";
+
+
+    if (!isValidPin(pin)) {
+
+      unlockMessage.textContent =
+        "Wprowadź 4 cyfry.";
+
+      return;
+
+    }
+
+
+    unlockButton.disabled =
+      true;
+
+    unlockButton.textContent =
+      "Sprawdzanie...";
+
+
+    try {
+
+      const key =
+        await verifyPin(pin);
+
+
+      if (!key) {
+
+        unlockMessage.textContent =
+          "Nieprawidłowy PIN.";
+
+        unlockPinInput.value =
+          "";
+
+        unlockPinInput.focus();
+
+        return;
+
+      }
+
+
+      sessionKey =
+        key;
+
+
+      await loadEncryptedTasks(
+        key
+      );
+
+
+      hideLockScreen();
+
+
+      populateTaskTimeOptions();
+
+      renderTasks();
+
+      updatePinUI();
+
+
+    } catch (error) {
+
+      console.error(
+        "Błąd odblokowania:",
+        error
+      );
+
+
+      unlockMessage.textContent =
+        "Nie udało się odblokować Focus5.";
+
+    } finally {
+
+      unlockButton.disabled =
+        false;
+
+      unlockButton.textContent =
+        "Odblokuj";
+
+    }
+
+  }
+
+
+  unlockButton.addEventListener(
+    "click",
+    unlockFocus
+  );
+
+
+  unlockPinInput.addEventListener(
+    "keydown",
+    function (event) {
+
+      if (
+        event.key === "Enter"
+      ) {
+
+        unlockFocus();
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // WYŁĄCZENIE PIN-U
+  // ==========================================
+
+  disablePinButton.addEventListener(
+    "click",
+    async function () {
+
+      if (
+        !pinEnabled ||
+        isLocked
+      ) {
+
+        return;
+
+      }
+
+
+      const confirmed =
+        confirm(
+          "Wyłączyć ochronę PIN? Zadania ponownie będą przechowywane lokalnie bez szyfrowania."
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      // Najpierw zapisujemy zadania
+      // w zwykłym localStorage.
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(tasks)
+      );
+
+
+      localStorage.removeItem(
+        PIN_ENABLED_KEY
+      );
+
+      localStorage.removeItem(
+        PIN_SALT_KEY
+      );
+
+      localStorage.removeItem(
+        PIN_VERIFIER_KEY
+      );
+
+      localStorage.removeItem(
+        ENCRYPTED_TASKS_KEY
+      );
+
+
+      pinEnabled =
+        false;
+
+      sessionKey =
+        null;
+
+      isLocked =
+        false;
+
+
+      updatePinUI();
+
+    }
+  );
+
+
+  // ==========================================
+  // RESET PRZY UTRACONYM PIN-IE
+  // ==========================================
+
+  resetFocusButton.addEventListener(
+    "click",
+    function () {
+
+      const confirmed =
+        confirm(
+          "Zresetować Focus5? Wszystkie zapisane zadania, PIN i ustawienie automatycznego czyszczenia zostaną usunięte."
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      localStorage.removeItem(
+        STORAGE_KEY
+      );
+
+      localStorage.removeItem(
+        ENCRYPTED_TASKS_KEY
+      );
+
+      localStorage.removeItem(
+        PIN_ENABLED_KEY
+      );
+
+      localStorage.removeItem(
+        PIN_SALT_KEY
+      );
+
+      localStorage.removeItem(
+        PIN_VERIFIER_KEY
+      );
+
+      localStorage.removeItem(
+        CLEANUP_KEY
+      );
+
+
+      tasks =
+        [];
+
+      cleanupAt =
+        null;
+
+      pinEnabled =
+        false;
+
+      sessionKey =
+        null;
+
+      isLocked =
+        false;
+
+      editingTaskId =
+        null;
+
+
+      hideLockScreen();
+
+      setDefaultCleanupDate();
+
+      populateCleanupTimeOptions();
+
+      updateCleanupStatus();
+
+      updatePinUI();
+
+      resetForm();
+
+      renderTasks();
+
+    }
+  );
+
+
+  // ==========================================
+  // ESC
+  // ==========================================
+
+  document.addEventListener(
+    "keydown",
+    function (event) {
+
+      if (
+        event.key !==
+        "Escape"
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        clearModal.classList.contains(
+          "open"
+        )
+      ) {
+
+        closeClearModal();
+
+      }
+
+
+      if (
+        pinModal.classList.contains(
+          "open"
+        )
+      ) {
+
+        closePinModal();
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // START
+  // ==========================================
+
+  await loadTasks();
+
 
   loadCleanupSchedule();
+
 
   setDefaultCleanupDate();
 
 
-  // Lista godzin zadania:
-  // tylko pozostała część dnia.
-
   populateTaskTimeOptions();
-
-
-  // Lista godzin cleanup:
-  // zależna od wybranego dnia.
 
   populateCleanupTimeOptions();
 
 
-  // Jeśli istnieje aktywny harmonogram,
-  // sprawdzamy najpierw, czy nie wygasł.
+  // Auto-wipe sprawdzamy również wtedy,
+  // gdy aplikacja startuje z aktywnym PIN-em.
 
-  updateCleanupStatus();
+  await updateCleanupStatus();
 
 
   if (cleanupAt) {
@@ -1935,14 +3044,24 @@ document.addEventListener(
 
   updateClock();
 
+  updatePinUI();
+
   renderTasks();
+
+
+  // Jeżeli PIN był wcześniej aktywny,
+  // po F5 aplikacja startuje zablokowana.
+
+  if (pinEnabled) {
+
+    showLockScreen();
+
+  }
 
 
   // ==========================================
   // INTERWAŁY
   // ==========================================
-
-  // Zegar
 
   setInterval(
     updateClock,
@@ -1950,42 +3069,40 @@ document.addEventListener(
   );
 
 
-  // Auto cleanup
-
   setInterval(
-    updateCleanupStatus,
+    function () {
+
+      updateCleanupStatus();
+
+    },
     1000
   );
 
 
-  // Status "za X min / TERAZ / po terminie"
-
   setInterval(
     function () {
 
-      renderTasks();
+      if (!isLocked) {
+
+        renderTasks();
+
+      }
 
     },
     30000
   );
 
 
-  // Aktualizujemy dostępne godziny
-  // nowych zadań co minutę.
-
   setInterval(
     function () {
 
       if (
+        !isLocked &&
         editingTaskId === null
       ) {
 
-        const currentValue =
-          taskTime.value;
-
-
         populateTaskTimeOptions(
-          currentValue
+          taskTime.value
         );
 
       }
@@ -1995,20 +3112,16 @@ document.addEventListener(
   );
 
 
-  // Aktualizujemy również godziny cleanup,
-  // jeżeli nie ma aktywnego harmonogramu.
-
   setInterval(
     function () {
 
-      if (!cleanupAt) {
-
-        const currentValue =
-          cleanupTime.value;
-
+      if (
+        !isLocked &&
+        !cleanupAt
+      ) {
 
         populateCleanupTimeOptions(
-          currentValue
+          cleanupTime.value
         );
 
       }
@@ -2018,3 +3131,4 @@ document.addEventListener(
   );
 
 });
+

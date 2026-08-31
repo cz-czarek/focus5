@@ -2,6 +2,7 @@
 <html lang="pl">
 
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -11,11 +12,21 @@
 
   <title>Focus5 | Five things. One workday.</title>
 
-  <link rel="stylesheet" href="styles.css">
+  <meta
+    name="description"
+    content="Focus5 to prosty, lokalny planer dnia pracy ograniczony do pięciu najważniejszych zadań."
+  >
+
+  <link
+    rel="stylesheet"
+    href="styles.css"
+  >
+
 </head>
 
 
 <body>
+
 
   <!-- =====================================
        HEADER
@@ -107,7 +118,7 @@
 
 
       <!-- =================================
-           FORMULARZ NOWEGO ZADANIA
+           FORMULARZ ZADANIA
            ================================= -->
 
       <form
@@ -135,35 +146,51 @@
 
         <div class="form-row">
 
+
+          <!-- GODZINA -->
+
           <div class="form-group">
 
             <label for="taskTime">
+
               Godzina
+
               <span class="optional">
                 opcjonalnie
               </span>
+
             </label>
 
+
             <select
-  id="taskTime"
-  name="taskTime"
->
-  <option value="">
-    Bez godziny
-  </option>
-</select>
+              id="taskTime"
+              name="taskTime"
+            >
+
+              <option value="">
+                Bez godziny
+              </option>
+
+            </select>
 
           </div>
 
 
+
+          <!-- NOTATKA -->
+
           <div class="form-group form-group-large">
 
             <label for="taskNote">
+
               Notatka
+
               <span class="optional">
                 opcjonalnie
               </span>
+
             </label>
+
 
             <input
               id="taskNote"
@@ -178,6 +205,9 @@
         </div>
 
 
+
+        <!-- PRZYCISKI FORMULARZA -->
+
         <button
           class="primary-button"
           id="addTaskButton"
@@ -186,46 +216,50 @@
           + Dodaj zadanie
         </button>
 
-       
 
         <button
-  class="cancel-edit-button"
-  id="cancelEditButton"
-  type="button"
-  hidden
->
-  Anuluj edycję
-</button>
-
-<p
-  class="task-limit-message"
-  id="taskLimitMessage"
-  hidden
->
-  Limit osiągnięty. Zakończ lub usuń jedno z pięciu zadań.
-</p>
+          class="cancel-edit-button"
+          id="cancelEditButton"
+          type="button"
+          hidden
+        >
+          Anuluj edycję
+        </button>
 
 
+        <p
+          class="task-limit-message"
+          id="taskLimitMessage"
+          hidden
+        >
+          Limit osiągnięty. Usuń jedno z pięciu zadań,
+          aby dodać kolejne.
+        </p>
 
       </form>
 
 
 
       <!-- =================================
-           LISTA ZADAŃ
+           INFORMACJA LOCAL-FIRST
            ================================= -->
 
-<div class="privacy-note">
+      <div class="privacy-note">
 
-  <span class="privacy-dot"></span>
+        <span class="privacy-dot"></span>
 
-  <p>
-    Dane są przechowywane lokalnie w tej przeglądarce
-    i nie są wysyłane na serwer.
-  </p>
+        <p>
+          Dane są przechowywane lokalnie w tej przeglądarce
+          i nie są wysyłane na serwer.
+        </p>
 
-</div>
+      </div>
 
+
+
+      <!-- =================================
+           LISTA ZADAŃ
+           ================================= -->
 
       <div class="task-list-wrapper">
 
@@ -260,13 +294,16 @@
 
 
     <!-- ===================================
-         CZYSZCZENIE LISTY
+         CLEAN UP
          =================================== -->
 
     <section
       class="cleanup-panel"
       aria-labelledby="cleanupHeading"
     >
+
+
+      <!-- NAGŁÓWEK -->
 
       <div>
 
@@ -287,77 +324,186 @@
       </div>
 
 
-<div class="cleanup-controls">
 
-  <div class="cleanup-datetime">
+      <!-- =================================
+           USTAWIENIA CZYSZCZENIA
+           ================================= -->
 
-    <div class="form-group">
-
-      <label for="cleanupDate">
-        Dzień
-      </label>
-
-      <input
-        id="cleanupDate"
-        type="date"
-      >
-
-    </div>
+      <div class="cleanup-controls">
 
 
-    <div class="form-group">
-
-      <label for="cleanupTime">
-        Godzina
-      </label>
-
-      <select id="cleanupTime">
-  <option value="">
-    Wybierz godzinę
-  </option>
-</select>
-
-    </div>
-
-  </div>
+        <div class="cleanup-datetime">
 
 
-  <button
-    class="secondary-button"
-    id="setCleanupButton"
-    type="button"
-  >
-    Ustaw automatyczne czyszczenie
-  </button>
+          <!-- DATA -->
+
+          <div class="form-group">
+
+            <label for="cleanupDate">
+              Dzień
+            </label>
+
+            <input
+              id="cleanupDate"
+              type="date"
+            >
+
+          </div>
 
 
-  <button
-    class="cancel-cleanup-button"
-    id="cancelCleanupButton"
-    type="button"
-    hidden
-  >
-    Wyłącz automatyczne czyszczenie
-  </button>
+
+          <!-- GODZINA -->
+
+          <div class="form-group">
+
+            <label for="cleanupTime">
+              Godzina
+            </label>
+
+            <select id="cleanupTime">
+
+              <option value="">
+                Wybierz godzinę
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
 
 
-  <p
-    class="cleanup-status"
-    id="cleanupStatus"
-  >
-    Automatyczne czyszczenie jest wyłączone.
-  </p>
+
+        <!-- USTAW CLEANUP -->
+
+        <button
+          class="secondary-button"
+          id="setCleanupButton"
+          type="button"
+        >
+          Ustaw automatyczne czyszczenie
+        </button>
 
 
-  <button
-    class="danger-button"
-    id="clearAllButton"
-    type="button"
-  >
-    Wyczyść wszystko
-  </button>
 
-</div>
+        <!-- WYŁĄCZ CLEANUP -->
+
+        <button
+          class="cancel-cleanup-button"
+          id="cancelCleanupButton"
+          type="button"
+          hidden
+        >
+          Wyłącz automatyczne czyszczenie
+        </button>
+
+
+
+        <!-- STATUS -->
+
+        <p
+          class="cleanup-status"
+          id="cleanupStatus"
+        >
+          Automatyczne czyszczenie jest wyłączone.
+        </p>
+
+
+
+        <!-- RĘCZNE CZYSZCZENIE -->
+
+        <button
+          class="danger-button"
+          id="clearAllButton"
+          type="button"
+        >
+          Wyczyść wszystko
+        </button>
+
+      </div>
+
+
+
+      <!-- =================================
+           PIN — OPCJONALNY DODATEK
+           ================================= -->
+
+      <div class="pin-panel">
+
+        <div class="pin-heading-row">
+
+
+          <div>
+
+            <p class="eyebrow">
+              privacy
+            </p>
+
+            <h3>
+              Ochrona PIN
+            </h3>
+
+          </div>
+
+
+          <span
+            class="pin-status"
+            id="pinStatus"
+          >
+            PIN wyłączony
+          </span>
+
+        </div>
+
+
+        <p class="pin-description">
+          Opcjonalna 4-cyfrowa blokada prywatności
+          lokalnej listy.
+        </p>
+
+
+        <div class="pin-actions">
+
+
+          <!-- USTAW PIN -->
+
+          <button
+            class="secondary-button"
+            id="setPinButton"
+            type="button"
+          >
+            Ustaw PIN
+          </button>
+
+
+
+          <!-- BLOKADA -->
+
+          <button
+            class="secondary-button"
+            id="lockNowButton"
+            type="button"
+            hidden
+          >
+            Zablokuj teraz
+          </button>
+
+
+
+          <!-- WYŁĄCZ PIN -->
+
+          <button
+            class="pin-disable-button"
+            id="disablePinButton"
+            type="button"
+            hidden
+          >
+            Wyłącz PIN
+          </button>
+
+        </div>
+
+      </div>
 
     </section>
 
@@ -366,21 +512,29 @@
 
 
   <!-- =====================================
-       SZABLON POJEDYNCZEGO ZADANIA
+       TEMPLATE ZADANIA
        ===================================== -->
 
   <template id="taskTemplate">
 
     <li class="task-item">
 
+
+      <!-- CHECK -->
+
       <button
         class="task-check"
         type="button"
         aria-label="Oznacz zadanie jako wykonane"
       >
+
         <span></span>
+
       </button>
 
+
+
+      <!-- TREŚĆ -->
 
       <div class="task-content">
 
@@ -402,6 +556,9 @@
 
       </div>
 
+
+
+      <!-- AKCJE -->
 
       <div class="task-actions">
 
@@ -443,61 +600,294 @@
 
   </footer>
 
-  <!-- =====================================
-     POTWIERDZENIE CZYSZCZENIA
-     ===================================== -->
 
-<div
-  class="confirm-modal"
-  id="clearModal"
-  aria-hidden="true"
->
+
+  <!-- =====================================
+       MODAL CZYSZCZENIA
+       ===================================== -->
 
   <div
-    class="confirm-modal-box"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="clearModalTitle"
+    class="confirm-modal"
+    id="clearModal"
+    aria-hidden="true"
   >
 
-    <p class="eyebrow">
-      potwierdzenie
-    </p>
+    <div
+      class="confirm-modal-box"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clearModalTitle"
+    >
 
-    <h2 id="clearModalTitle">
-      Wyczyścić całą listę?
-    </h2>
-
-    <p class="confirm-modal-text">
-      Wszystkie zadania zostaną usunięte.
-      Tej operacji nie można cofnąć.
-    </p>
+      <p class="eyebrow">
+        potwierdzenie
+      </p>
 
 
-    <div class="confirm-modal-actions">
+      <h2 id="clearModalTitle">
+        Wyczyścić całą listę?
+      </h2>
 
-      <button
-        class="modal-cancel-button"
-        id="cancelClearButton"
-        type="button"
-      >
-        Anuluj
-      </button>
 
-      <button
-        class="modal-confirm-button"
-        id="confirmClearButton"
-        type="button"
-      >
-        Wyczyść listę
-      </button>
+      <p class="confirm-modal-text">
+        Wszystkie zadania zostaną usunięte.
+        Tej operacji nie można cofnąć.
+      </p>
+
+
+      <div class="confirm-modal-actions">
+
+        <button
+          class="modal-cancel-button"
+          id="cancelClearButton"
+          type="button"
+        >
+          Anuluj
+        </button>
+
+
+        <button
+          class="modal-confirm-button"
+          id="confirmClearButton"
+          type="button"
+        >
+          Wyczyść listę
+        </button>
+
+      </div>
 
     </div>
 
   </div>
 
-</div>
 
+
+  <!-- =====================================
+       MODAL USTAWIANIA PIN
+       ===================================== -->
+
+  <div
+    class="confirm-modal"
+    id="pinModal"
+    aria-hidden="true"
+  >
+
+    <div
+      class="confirm-modal-box"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pinModalTitle"
+    >
+
+      <p class="eyebrow">
+        privacy
+      </p>
+
+
+      <h2 id="pinModalTitle">
+        Ustaw 4-cyfrowy PIN
+      </h2>
+
+
+      <p class="confirm-modal-text">
+        PIN będzie wymagany po ponownym otwarciu
+        lub odświeżeniu Focus5.
+      </p>
+
+
+
+      <!-- PIN -->
+
+      <div class="form-group pin-form-group">
+
+        <label for="pinInput">
+          PIN
+        </label>
+
+        <input
+          id="pinInput"
+          class="pin-input"
+          type="password"
+          inputmode="numeric"
+          maxlength="4"
+          autocomplete="new-password"
+          placeholder="••••"
+        >
+
+      </div>
+
+
+
+      <!-- POWTÓRZENIE PIN -->
+
+      <div class="form-group pin-form-group">
+
+        <label for="pinConfirmInput">
+          Powtórz PIN
+        </label>
+
+        <input
+          id="pinConfirmInput"
+          class="pin-input"
+          type="password"
+          inputmode="numeric"
+          maxlength="4"
+          autocomplete="new-password"
+          placeholder="••••"
+        >
+
+      </div>
+
+
+
+      <!-- BŁĄD -->
+
+      <p
+        class="pin-message"
+        id="pinModalMessage"
+      ></p>
+
+
+
+      <!-- INFORMACJA -->
+
+      <p class="pin-security-note">
+        PIN stanowi podstawową blokadę prywatności.
+        Nie przechowuj w Focus5 haseł ani danych
+        wymagających wysokiego poziomu ochrony.
+      </p>
+
+
+
+      <!-- AKCJE -->
+
+      <div class="confirm-modal-actions">
+
+        <button
+          class="modal-cancel-button"
+          id="cancelPinButton"
+          type="button"
+        >
+          Anuluj
+        </button>
+
+
+        <button
+          class="modal-confirm-button pin-save-button"
+          id="savePinButton"
+          type="button"
+        >
+          Włącz PIN
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================
+       EKRAN BLOKADY
+       ===================================== -->
+
+  <div
+    class="lock-screen"
+    id="lockScreen"
+    aria-hidden="true"
+  >
+
+    <div class="lock-card">
+
+
+      <a
+        class="logo lock-logo"
+        href="#"
+        aria-label="Focus5"
+      >
+        Focus<span>5</span>
+      </a>
+
+
+      <p class="eyebrow">
+        private session
+      </p>
+
+
+      <h2>
+        Focus5 jest zablokowany
+      </h2>
+
+
+      <p class="lock-description">
+        Wprowadź 4-cyfrowy PIN,
+        aby otworzyć swoją listę.
+      </p>
+
+
+
+      <!-- PIN -->
+
+      <input
+        id="unlockPinInput"
+        class="unlock-pin-input"
+        type="password"
+        inputmode="numeric"
+        maxlength="4"
+        autocomplete="off"
+        placeholder="••••"
+        aria-label="PIN"
+      >
+
+
+
+      <!-- ODBLOKUJ -->
+
+      <button
+        class="primary-button unlock-button"
+        id="unlockButton"
+        type="button"
+      >
+        Odblokuj
+      </button>
+
+
+
+      <!-- BŁĄD -->
+
+      <p
+        class="pin-message"
+        id="unlockMessage"
+      ></p>
+
+
+
+      <!-- RESET -->
+
+      <button
+        class="lock-reset-button"
+        id="resetFocusButton"
+        type="button"
+      >
+        Nie pamiętam PIN-u
+      </button>
+
+
+      <p class="lock-reset-info">
+        Reset usuwa zapisane zadania
+        i ustawienia ochrony.
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================
+       JAVASCRIPT
+       ===================================== -->
 
   <script src="script.js"></script>
 

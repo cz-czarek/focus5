@@ -1144,3 +1144,271 @@ select {
 
   opacity: 0.4;
 }
+
+
+/* ==========================================
+   PIN / PRIVACY
+   ========================================== */
+
+/* ==========================================
+   PIN / PRIVACY — COMPACT
+   ========================================== */
+
+.pin-panel {
+  margin-top: 26px;
+  padding-top: 24px;
+
+  border-top: 1px solid var(--line);
+}
+
+
+.pin-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 14px;
+}
+
+
+.pin-heading-row h3 {
+  margin: 0;
+
+  font-size: 1rem;
+
+  letter-spacing: -0.02em;
+}
+
+
+.pin-status {
+  margin: 0;
+
+  color: var(--success);
+
+  font-size: 0.67rem;
+  font-weight: 700;
+
+  text-align: right;
+}
+
+
+.pin-description {
+  margin: 8px 0 14px;
+
+  color: var(--muted);
+
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+
+.pin-actions {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.pin-actions .secondary-button {
+  padding: 10px 14px;
+}
+
+
+.pin-disable-button {
+  width: auto;
+
+  align-self: center;
+
+  padding: 4px 8px;
+
+  border: 0;
+
+  background: transparent;
+  color: var(--muted);
+
+  font-size: 0.67rem;
+  font-weight: 600;
+
+  text-decoration: underline;
+
+  cursor: pointer;
+}
+
+
+.pin-disable-button:hover {
+  color: var(--danger);
+}
+
+
+.pin-disable-button:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+
+/* ==========================================
+   PIN MODAL
+   ========================================== */
+
+.pin-form-group {
+  margin-top: 14px;
+}
+
+
+.pin-input,
+.unlock-pin-input {
+  letter-spacing: 0.4em;
+
+  text-align: center;
+
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+
+.pin-message {
+  min-height: 20px;
+
+  margin: 12px 0 0;
+
+  color: var(--danger);
+
+  font-size: 0.74rem;
+}
+
+
+.pin-security-note {
+  margin: 14px 0 22px;
+
+  padding: 11px 12px;
+
+  border-radius: 8px;
+
+  background: var(--surface-soft);
+  color: var(--muted);
+
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+
+.pin-save-button {
+  background: var(--accent);
+}
+
+
+/* ==========================================
+   LOCK SCREEN
+   ========================================== */
+
+.lock-screen {
+  position: fixed;
+  inset: 0;
+
+  z-index: 5000;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: var(--background);
+}
+
+
+.lock-screen.open {
+  display: flex;
+}
+
+
+.lock-card {
+  width: min(390px, 100%);
+
+  padding: 36px;
+
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+
+  background: var(--surface);
+
+  text-align: center;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+
+.lock-logo {
+  display: inline-block;
+
+  margin-bottom: 32px;
+}
+
+
+.lock-card h2 {
+  margin: 0;
+
+  font-size: 1.8rem;
+
+  letter-spacing: -0.04em;
+}
+
+
+.lock-description {
+  margin: 12px auto 24px;
+
+  max-width: 300px;
+
+  color: var(--muted);
+
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+
+.unlock-pin-input {
+  max-width: 190px;
+
+  margin: 0 auto;
+
+  display: block;
+}
+
+
+.unlock-button {
+  width: 190px;
+
+  margin-top: 12px;
+}
+
+
+.lock-reset-button {
+  margin-top: 24px;
+
+  border: 0;
+
+  background: transparent;
+  color: var(--muted);
+
+  font-size: 0.7rem;
+
+  text-decoration: underline;
+
+  cursor: pointer;
+}
+
+
+.lock-reset-button:hover {
+  color: var(--danger);
+}
+
+
+.lock-reset-info {
+  margin: 7px 0 0;
+
+  color: var(--muted);
+
+  font-size: 0.64rem;
+}
