@@ -1412,3 +1412,35 @@ select {
 
   font-size: 0.64rem;
 }
+
+
+/* ==========================================
+   WYRÓWNANIE PÓL FORMULARZY
+   ========================================== */
+
+.form-group input,
+.form-group select {
+  box-sizing: border-box;
+  height: 50px;
+}
+
+
+/* Select nie może rozpychać kolumny */
+
+.form-group {
+  min-width: 0;
+}
+
+.form-group select {
+  width: 100%;
+  min-width: 0;
+}
+
+
+/* Dwie równe kolumny w CLEAN UP */
+
+.cleanup-datetime {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}

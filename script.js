@@ -603,7 +603,7 @@ document.addEventListener(
     cleanupTime.appendChild(
       createTimeOption(
         "",
-        "Wybierz godzinę"
+        "Wybierz"
       )
     );
 
